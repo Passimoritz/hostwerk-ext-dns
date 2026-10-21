@@ -50,7 +50,7 @@ class DynamicNames {
    *   fetch          für die Anbieter (Tests: Nachbildung)
    *   detectIp       () → { v4, v6 } (Tests: fest)
    *   resolver       für die Prüfung „zeigt auf mich?“
-   *   notifier       { notify({ title, text, kind }), note(key, { ok, label, text }) } – beides optional
+   *   notifier       { notify({ title, kind, lines: [{ name, error }], tail }), note(key, { ok, label, text }) } – optional
    *   settings       Hostwerks Einstellungen (für die DynDNS des Routers), optional
    *   now            Uhr (Tests)
    */
@@ -306,10 +306,10 @@ class DynamicNames {
         await this.notifier.notify({
           kind: needsYou ? 'error' : 'warn',
           title: fresh.length === 1 ? `DNS name ${fresh[0].name} is not updated` : `${fresh.length} DNS names are not updated`,
-          text: fresh.map((x) => `${x.name}: ${x.error}`).join('\n') + (needsYou ? '' : '\nHostwerk tries again by itself.'),
+          lines: fresh.map((x) => ({ name: x.name, error: x.error })), tail: needsYou ? '' : 'Hostwerk tries again by itself.',
         });
       } else if (!now.length && before.length) {
-        await this.notifier.notify({ kind: 'ok', title: 'DNS names are up to date again', text: before.map((x) => x.name).join(', ') });
+        await this.notifier.notify({ kind: 'ok', title: 'DNS names are up to date again', lines: [], tail: before.map((x) => x.name).join(', ') });
       }
     } catch (e) { this.log('dns notify:', e.message); }
   }

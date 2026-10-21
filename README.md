@@ -2,27 +2,64 @@
 
 # DNS management
 
-Set, change, delete and check the DNS records of your domains right at Cloudflare, Hetzner, INWX or IONOS (A, AAAA, CNAME, MX, TXT, SRV, CAA) – credentials stored encrypted in Hostwerk. Other extensions use the service, e.g. the mail server for SPF/DKIM/DMARC and Let’s Encrypt for wildcard certificates (dns-01).
+A name for your connection – free or with your own domain – that follows your IPv4 and IPv6 by itself, plus all DNS
+records of your domains right at Cloudflare, deSEC, Hetzner, INWX or IONOS (A, AAAA, CNAME, MX, TXT, SRV, CAA) with
+templates, checks, DNSSEC status and zone files. Other extensions use the service, e.g. the mail server for
+SPF/DKIM/DMARC and Let’s Encrypt for wildcard certificates (dns-01).
 
 [Deutsch](README.de.md) · An official [Hostwerk](https://github.com/Passimoritz/hostwerk-public) extension (SDK 2.7, native extension)
 
 ## What it does
 
-- Cloudflare, Hetzner (Cloud DNS and the older DNS console), INWX and IONOS over their official APIs
-- Records A, AAAA, CNAME, MX, TXT, SRV and CAA: add, change, delete
-- “Check” asks public resolvers (Cloudflare, Google, Quad9) whether a record is out there yet
-- Takes over the SPF/DKIM/DMARC/MX records of the mail server extension with one click
-- Credentials are stored encrypted (Hostwerk’s secret store) and never sent to the interface
-- Service “dns” for other extensions – including ready-made dns-01 functions for Let’s Encrypt (wildcards)
+- **Set up a name** – assistant with two ways: *“I have no domain”* (free name, step by step with the sign-up link, paste
+  the token) or *“I have a domain”* (pick the provider, connect, optionally let one name follow this connection)
+- **Maintenance-free names**: every 5 minutes Hostwerk looks at the public address (several sources without an account;
+  an IPv4 counts once two agree; for IPv6 the fixed address of this PC, not the changing privacy address) and updates a
+  name **only when it changed** – never more than once a minute. Every 6 hours it checks with public resolvers that the
+  name really points here and sets it again if not. Provider down → growing pauses (5 min … 6 h), 429 → waits at least
+  as long as the provider says, wrong or expired token → no more tries until you change it. Problems come as **one**
+  notification (Settings → Notifications, “DNS names are not updated”) and show up in Hostwerk’s self-maintenance; every
+  change is in the name’s history
+- Records A, AAAA, CNAME, MX, TXT, SRV and CAA: add, change, delete, filter; right-click on a row
+- **Templates**: website with and without www, name for a Hostwerk web server, Minecraft (A/AAAA + SRV when the port is not
+  25565), mail basics (MX, SPF, DMARC), CAA for Let’s Encrypt – addresses are replaced, nothing is added twice
+- **Check / propagation**: asks Cloudflare, Google, Quad9 **and the provider’s own name server** – so you see “the provider
+  has it, the world is still waiting for the TTL”
+- **DNSSEC status** per zone (on, DS missing at the registrar, off, broken) – with the DS records from deSEC to copy
+- **Zone files**: export (BIND format) and import from your old provider – only missing records are added
+- Mail server records (SPF/DKIM/DMARC/MX) of the mail server extension with one click
+- Credentials and tokens encrypted with Hostwerk’s secret key, never sent to the interface
 
 ## Providers
 
-| Provider | Credentials | Notes |
-|---|---|---|
-| Cloudflare | API token (template “Edit zone DNS”) | Proxy switch for A/AAAA/CNAME |
-| Hetzner | API token of a Console project (“Read & Write”) | Choose “Older DNS console” for zones still on dns.hetzner.com |
-| INWX | User name, password, optional TOTP secret | Best a sub-account that may only change DNS; test system (OTE) selectable; TTL at least 300 s |
-| IONOS | API key `prefix.secret` | Name/type changes are done as delete + create |
+| Provider | Costs | Domain needed? | Maintenance-free | What you need |
+|---|---|---|---|---|
+| **DuckDNS** | free | no (`name.duckdns.org`) | yes | Token (sign in with GitHub/Google/Reddit/X) |
+| **deSEC** (`dedyn.io`) | free (non-profit) | no (`name.dedyn.io`) – also own domains | yes | Token; DNSSEC included, all record types |
+| **dynv6** | free | no (`name.dynv6.net` …) | yes | HTTP token |
+| **FreeDNS** (afraid.org) | free | no (many shared domains) | yes | Update token per record (A, AAAA) |
+| **No-IP** | free hostname | no (`name.ddns.net` …) | **no** – confirm by e-mail every 30 days | User + password or DDNS key |
+| **Cloudflare** | DNS free (Free plan) | yes – the domain costs money at a registrar | yes | API token (template “Edit zone DNS”); proxy switch |
+| **deSEC** (own domain) | free | yes – domain at any registrar | yes | Token; name servers ns1.desec.io / ns2.desec.org |
+| **Hetzner** | DNS free | yes – domain costs money | yes | API token of a Console project (“Read & Write”) |
+| **INWX** | DNS included with domains there | yes – domain costs money | yes | User, password, optional TOTP secret; TTL ≥ 300 s |
+| **IONOS** | DNS included with domains there | yes – domain costs money | yes | API key `prefix.secret` |
+
+“Maintenance-free” means: after setting it up once you never have to do anything – as long as the provider keeps the
+account. No-IP is offered only as an alternative and is clearly marked.
+
+## Where it shows up in Hostwerk
+
+| Place | What |
+|---|---|
+| **DNS** (own page) | Names, records, providers – the full management |
+| **Live → DNS** (next to *Domains & HTTPS*) | Names with status and “update now”, the domains of your web servers with **Create DNS record** |
+| **Minecraft → server → Connect** | The free name with port to copy, **Own address** creates A/AAAA (+ SRV) in your domain |
+| **Live → Domains & HTTPS** | Hostwerk uses `ctx.dns.acme.create/remove` for wildcard certificates and without port 80 |
+
+“Router & port forwarding” keeps its own simple DynDNS setting – it still works. A name is never updated by both: the DNS
+page shows the router’s name and moves it here with **Keep it up to date here** (the token moves along encrypted, the
+router setting is switched off).
 
 ## For other extensions: the service `dns`
 
@@ -39,6 +76,9 @@ await dns.remove({ name: 'www.example.com', type: 'A', content: '203.0.113.5' })
 await dns.records('example.com');                                                      // records of the zone
 await dns.verify({ name: 'example.com', type: 'MX', content: 'mail.example.com', priority: 10 }); // → { ok, some, results: [{ resolver, ok, values }] }
 await dns.waitFor(record, { timeout: 180000 });                                        // until Cloudflare, Google and Quad9 see it
+await dns.acme.create({ domain: 'example.com', name: '_acme-challenge.example.com', value }); // what Hostwerk itself calls (SDK 2.10)
+const ip = await dns.names.ips();                                                      // { v4, v6 } of this connection
+dns.names.list();                                                                      // names that follow this connection, with status
 ```
 
 `set()` never creates duplicates: TXT records with a tag (`v=spf1`, `v=DMARC1`, `v=DKIM1` …) replace the old one under the
@@ -82,9 +122,16 @@ For an own ACME implementation, `dns.acme.txtValue(keyAuthorization)` gives the 
 
 ## Limits
 
-- Hostwerk’s own certificate function (*Live → Certificates*, 2.11) only knows http-01. Wildcards need a small change in
-  Hostwerk itself: pass `ctx.dns.acme` to `acme-client` when the domain starts with `*.` or port 80 is not reachable.
-- The mail server extension does not set its records by itself yet – use the button on this page or `dns.apply()`.
+- DuckDNS, dynv6 and FreeDNS only take A/AAAA (DuckDNS one TXT) through their update interface – other records are edited on
+  their website. deSEC names can carry every record type here.
+- FreeDNS: each record has its own update token (IPv6 needs a second one).
+- No-IP: free names must be confirmed by e-mail every 30 days – Hostwerk cannot do that.
+- IPv6: a name only gets an AAAA record when the fixed IPv6 of this PC is reachable from outside (same /64 as the address
+  the internet sees). Without IPv6 to the outside existing AAAA records stay untouched.
+- The check talks to public resolvers over DNS (UDP/TCP 53) and – for DNSSEC – over DNS-over-HTTPS (Cloudflare, Google).
+- Hostwerk’s own certificate function (*Live → Domains & HTTPS*) uses `ctx.dns.acme.create/remove` since Hostwerk 2.12; older
+  versions only know http-01.
+- The mail server extension does not set its records itself yet – use the button on the Providers tab or `dns.apply()`.
 - Zones are cached for 5 minutes; *Reload* fetches them again.
 
 ## Install
@@ -94,6 +141,8 @@ In Hostwerk: **Extensions → Discover** and click “Install”.
 Native extensions run as part of Hostwerk (own server and interface part). That is why Hostwerk only installs them from the official catalogue (with checksum) or in developer mode.
 
 ## Data
+
+`data/dns/dynamic.json` – names that follow this connection, their status and history; tokens sealed like the provider credentials.
 
 `data/dns/accounts.json` – provider accounts; API tokens and passwords sealed with Hostwerk’s secret key (`config/secret.key`). Removing the extension deletes nothing.
 

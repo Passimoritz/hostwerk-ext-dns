@@ -42,9 +42,11 @@ function makeNotifier(host) {
   if (n && typeof n.register === 'function' && typeof n.notify === 'function') {
     try { n.register('dns-names', { de: 'DNS-Namen werden nicht aktualisiert', en: 'DNS names are not updated' }, { on: true }); canNotify = true; } catch { canNotify = false; }
   }
-  const t = (s) => (typeof host.t === 'function' ? host.t(s) : s);
+  const t = (s, v) => (typeof host.t === 'function' ? host.t(s, v) : s);
+  // Texte in Hostwerks Sprache: Titel und Fehler sind Englisch und stehen in locales/de.json
+  const text = ({ lines = [], tail = '' }) => [...lines.map((l) => `${l.name}: ${t(l.error)}`), tail ? t(tail) : ''].filter(Boolean).join('\n');
   return {
-    notify: canNotify ? ({ title, text, kind }) => n.notify('dns-names', { title: t(title), text, kind, url: '#/ext/dns' }) : null,
+    notify: canNotify ? (m) => n.notify('dns-names', { title: t(m.title), text: text(m), kind: m.kind, url: '#/ext/dns' }) : null,
     note: ctx.keeper && typeof ctx.keeper.note === 'function' ? (key, x) => ctx.keeper.note(key, x) : null,
   };
 }

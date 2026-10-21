@@ -228,7 +228,8 @@ test('names: provider down → growing pauses; 429 → waits at least Retry-Afte
   assert.strictEqual(b.state.nextTry - s.now(), 3600 * 1000);
   assert.strictEqual(s.sent.length, 1, 'one notification for both names');
   assert.match(s.sent[0].title, /2 DNS names/);
-  assert.match(s.sent[0].text, /tries again by itself/);
+  assert.match(s.sent[0].tail, /tries again by itself/);
+  assert.strictEqual(s.sent[0].lines.length, 2);
   // Nächster Durchlauf vor Ablauf der Pause: keine Anfrage, keine neue Meldung
   const n = s.f.seen.length;
   s.tick(60000); await s.names.tick();
@@ -256,7 +257,7 @@ test('names: token expired → no more tries until changed, the user is told onc
   let h = s.names.list().hosts[0];
   assert.ok(h.state.blocked);
   assert.strictEqual(s.sent[0].kind, 'error');
-  assert.doesNotMatch(s.sent[0].text, /tries again/);
+  assert.strictEqual(s.sent[0].tail, '');
   const n = s.f.seen.length;
   s.tick(24 * 3600 * 1000); s.names.ipCache = null; await s.names.tick();
   assert.strictEqual(s.f.seen.length, n, 'blocked: nothing is sent');

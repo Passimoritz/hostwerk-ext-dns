@@ -215,11 +215,12 @@ class DnsService {
     return { action: 'removed', record: hit };
   }
 
-  /** Viele Einträge setzen – jeder für sich, ein Fehler hält die anderen nicht auf. */
+  /** Viele Einträge setzen – jeder für sich, ein Fehler hält die anderen nicht auf. replace je Eintrag wie bei set(). */
   async apply(records) {
     const out = [];
     for (const r of records || []) {
-      try { out.push({ ...(await this.set(r)), input: r }); } catch (e) { out.push({ action: 'error', error: e.message, input: r }); }
+      const opts = r && ['tag', 'type', 'target', false].includes(r.replace) ? { replace: r.replace } : {};
+      try { out.push({ ...(await this.set(r, opts)), input: r }); } catch (e) { out.push({ action: 'error', error: e.message, input: r }); }
     }
     return out;
   }
