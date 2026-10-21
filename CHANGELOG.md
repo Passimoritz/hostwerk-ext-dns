@@ -1,3 +1,8 @@
+## 1.2.0
+
+- Lives where it belongs: Go live → Make reachable → DNS, the address card of every Minecraft server and – new – the section “DNS records” of a web server – no own sidebar entry any more (Hostwerk 3.0+); the full page stays under Extensions → Open and can be pinned in the sidebar settings. / Steckt jetzt dort, wo sie hingehört: Livebetrieb → Erreichbar machen → DNS, Adress-Karte jedes Minecraft-Servers und – neu – Abschnitt „DNS-Einträge“ eines Webservers – kein eigener Seitenleisten-Eintrag mehr (Hostwerk 3.0+); die ganze Seite bleibt unter Erweiterungen → Öffnen und lässt sich in den Seitenleisten-Einstellungen anheften.
+- New section “DNS records” on the overview of a web server (Hostwerk 3.0+): “Create DNS record” for its domains – only where the domain is connected to a DNS provider. / Neuer Abschnitt „DNS-Einträge“ in der Übersicht eines Webservers (Hostwerk 3.0+): „DNS-Eintrag anlegen“ für seine Domains – nur, wo die Domain bei einem DNS-Anbieter verbunden ist.
+
 ## 1.1.0
 
 - Free names without a domain: DuckDNS, deSEC (dedyn.io, with DNSSEC), dynv6, FreeDNS (afraid.org) and – clearly marked as not maintenance-free – No-IP; assistant “I have no domain / I have a domain” with sign-up link and step-by-step help. / Kostenlose Namen ohne Domain: DuckDNS, deSEC (dedyn.io, mit DNSSEC), dynv6, FreeDNS (afraid.org) und – klar als nicht wartungsfrei gekennzeichnet – No-IP; Assistent „Ich habe keine Domain / Ich habe eine Domain“ mit Anmelde-Link und Schritt-für-Schritt-Hilfe.

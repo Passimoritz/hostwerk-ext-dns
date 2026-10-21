@@ -11,6 +11,7 @@ SPF/DKIM/DMARC and Let’s Encrypt for wildcard certificates (dns-01).
 
 ## What it does
 
+- **Where:** Go live → Make reachable → DNS, the address card of every Minecraft server and – new – the section “DNS records” of a web server – no own sidebar entry since 1.2.0; the full page stays under Extensions → Open
 - **Set up a name** – assistant with two ways: *“I have no domain”* (free name, step by step with the sign-up link, paste
   the token) or *“I have a domain”* (pick the provider, connect, optionally let one name follow this connection)
 - **Maintenance-free names**: every 5 minutes Hostwerk looks at the public address (several sources without an account;

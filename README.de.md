@@ -11,6 +11,7 @@ SPF/DKIM/DMARC und Let’s Encrypt für Wildcard-Zertifikate (dns-01).
 
 ## Was sie kann
 
+- **Wo:** Livebetrieb → Erreichbar machen → DNS, Adress-Karte jedes Minecraft-Servers und – neu – Abschnitt „DNS-Einträge“ eines Webservers – seit 1.2.0 ohne eigenen Seitenleisten-Eintrag; die ganze Seite bleibt unter Erweiterungen → Öffnen
 - **Namen einrichten** – Assistent mit zwei Wegen: *„Ich habe keine Domain“* (kostenloser Name, Schritt für Schritt mit
   Link zur Anmeldung, Token einfügen) oder *„Ich habe eine Domain“* (Anbieter wählen, verbinden, freiwillig einen Namen
   diesem Anschluss folgen lassen)

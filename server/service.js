@@ -278,7 +278,7 @@ class DnsService {
           if (!R.DOMAIN.test(d.replace(/^\*\./, 'x.')) || /(^|\.)(localhost|local|test|lan|home|internal)$/.test(d)) continue;
           if (out.some((x) => x.domain === d)) continue;
           const z = R.bestZone(d, zones);
-          out.push({ domain: d, web: inst.name || inst.id, zone: z ? { account: z.account, id: z.id, name: z.name } : null });
+          out.push({ domain: d, web: inst.name || inst.id, webId: inst.id, zone: z ? { account: z.account, id: z.id, name: z.name } : null });
         }
       }
     }

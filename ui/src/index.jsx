@@ -747,16 +747,18 @@ function DnsPage() {
 }
 
 /* ---------------- Einbau: Livebetrieb → DNS ---------------- */
-function SitesCard() {
+// webId = nur die Domains dieses Webservers (Abschnitt auf seiner Detailseite, ohne eigenen Kartenkopf – den zeichnet Hostwerk)
+function SitesCard({ webId = null }) {
   const s = useApi('/dns/sites', [], { live: false, poll: false });
   const zs = useApi('/dns/zones', [], { live: false, poll: false });
   const [tpl, setTpl] = useState(null);
-  if (!s.data || !s.data.length) return null;
+  const list = ((s.data) || []).filter((x) => !webId || x.webId === webId);
+  if (!list.length) return null;
   const zones = (zs.data && zs.data.zones) || [];
   return (
-    <div className="card">
-      <div className="card-head"><Server size={16} /><h3>Domains of your web servers</h3><InfoTip pop title="Domains of your web servers">The addresses you gave your web servers. Where the domain is connected here, one click points it to this connection (A/AAAA).</InfoTip></div>
-      {s.data.map((x) => (
+    <div className={webId ? '' : 'card'}>
+      {!webId && <div className="card-head"><Server size={16} /><h3>Domains of your web servers</h3><InfoTip pop title="Domains of your web servers">The addresses you gave your web servers. Where the domain is connected here, one click points it to this connection (A/AAAA).</InfoTip></div>}
+      {list.map((x) => (
         <div key={x.domain} className="list-item">
           <div className="grow" style={{ minWidth: 0 }}>
             <div className="row-tight"><b className="mono ellipsis">{x.domain}</b><span className="tiny muted">{x.web}</span></div>
@@ -785,6 +787,21 @@ function LiveDnsTab() {
   );
 }
 
+/* ---------------- Einbau: Webserver → Detailseite (Abschnitt, SDK 3.2) ---------------- */
+// when() ist synchron: welche Webserver eine Domain bei einem verbundenen DNS-Anbieter haben, einmal nachschauen und
+// merken (alle 2 Minuten neu) – der Abschnitt erscheint nur dort, wo „DNS-Eintrag anlegen“ wirklich geht
+let withZone = new Set(); let checkedAt = 0;
+function hasDnsZone(webId) {
+  if (Date.now() - checkedAt > 120000) {
+    checkedAt = Date.now();
+    get('/dns/sites').then((list) => { withZone = new Set((list || []).filter((x) => x.zone && x.webId && !x.domain.startsWith('*.')).map((x) => x.webId)); }).catch(() => {});
+  }
+  return withZone.has(webId);
+}
+function WebSiteDns({ web }) {
+  return <SitesCard webId={web && web.id} />;
+}
+
 /* ---------------- Einbau: Minecraft → eigene Adresse ---------------- */
 function McAddress({ s }) {
   const n = useApi('/dns/names', [], { live: false, poll: false });
@@ -811,5 +828,9 @@ export default {
     // Livebetrieb: direkt hinter „Domains & HTTPS“, Gruppe „Erreichbar machen“
     'live.tabs': [{ id: 'dns', title: 'DNS', icon: Globe, Component: LiveDnsTab, after: 'domains', group: 'erreichbar', order: 25 }],
     'mc.connect': [{ id: 'dns-name', title: 'Own address', Component: McAddress, order: 45 }],
+  },
+  // Webserver → Übersicht: „DNS-Eintrag anlegen“ für die Domains dieses Webservers (Hostwerk 3.0+ mit SDK 3.2)
+  sections: {
+    'web.site': [{ id: 'dns', title: 'DNS records', icon: Globe, Component: WebSiteDns, when: (ctx) => hasDnsZone(ctx && ctx.id), order: 40 }],
   },
 };
