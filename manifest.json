@@ -1,0 +1,67 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Passimoritz/hostwerk-public/main/sdk/manifest.schema.json",
+  "id": "dns",
+  "name": {
+    "de": "DNS-Verwaltung",
+    "en": "DNS management"
+  },
+  "description": {
+    "de": "DNS-Einträge deiner Domains direkt bei Cloudflare, Hetzner, INWX oder IONOS setzen, ändern, löschen und prüfen (A, AAAA, CNAME, MX, TXT, SRV, CAA) – Zugangsdaten verschlüsselt in Hostwerk. Andere Erweiterungen nutzen den Dienst, z. B. der Mailserver für SPF/DKIM/DMARC und Let’s Encrypt für Wildcard-Zertifikate (dns-01).",
+    "en": "Set, change, delete and check the DNS records of your domains right at Cloudflare, Hetzner, INWX or IONOS (A, AAAA, CNAME, MX, TXT, SRV, CAA) – credentials stored encrypted in Hostwerk. Other extensions use the service, e.g. the mail server for SPF/DKIM/DMARC and Let’s Encrypt for wildcard certificates (dns-01)."
+  },
+  "version": "1.0.0",
+  "author": "Hostwerk",
+  "homepage": "https://github.com/Passimoritz/hostwerk-ext-dns",
+  "license": "MIT",
+  "icon": "icon.svg",
+  "banner": "banner.svg",
+  "color": "#0891b2",
+  "category": "network",
+  "hostwerk": ">=2.11.0",
+  "permissions": [
+    "native"
+  ],
+  "page": {
+    "title": {
+      "de": "DNS",
+      "en": "DNS"
+    },
+    "description": {
+      "de": "DNS-Einträge bei deinem Anbieter.",
+      "en": "DNS records at your provider."
+    },
+    "icon": "globe"
+  },
+  "backend": "server/index.js",
+  "ui": "ui/index.js",
+  "provides": [
+    "dns"
+  ],
+  "uses": [
+    "mailserver"
+  ],
+  "synergies": [
+    {
+      "with": "mail-server",
+      "title": {
+        "de": "Mail-Einträge automatisch setzen",
+        "en": "Set mail records automatically"
+      },
+      "text": {
+        "de": "MX, SPF, DKIM und DMARC des Mailservers mit einem Klick beim DNS-Anbieter eintragen.",
+        "en": "Put the mail server’s MX, SPF, DKIM and DMARC at the DNS provider with one click."
+      }
+    },
+    {
+      "with": "router",
+      "title": {
+        "de": "Eigene Domain statt DynDNS-Name",
+        "en": "Own domain instead of a DynDNS name"
+      },
+      "text": {
+        "de": "A-/AAAA-Einträge auf die öffentliche Adresse deines Routers zeigen lassen.",
+        "en": "Point A/AAAA records at your router’s public address."
+      }
+    }
+  ]
+}
