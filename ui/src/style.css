@@ -1,0 +1,13 @@
+/* DNS-Verwaltung */
+.dns-grid { display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); gap: var(--sp-4); align-items: start; }
+@media (max-width: 900px) { .dns-grid { grid-template-columns: minmax(0, 1fr); } }
+.dns-zone { max-width: 260px; }
+.dns-filter { padding-bottom: 0; }
+.dns-table-wrap { overflow-x: auto; }
+.dns-table td { vertical-align: middle; }
+.dns-value { max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dns-actions { white-space: nowrap; text-align: right; }
+.dns-domain { display: flex; flex-direction: column; gap: var(--sp-1); }
+.dns-mailrow { min-width: 0; }
+.dns-link { display: inline-flex; align-items: center; gap: var(--sp-1); color: var(--accent-text); }
+.dns-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
