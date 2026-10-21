@@ -12,13 +12,17 @@
  *   remove(record)                     genau diesen Eintrag löschen
  *   apply(records)                     viele Einträge auf einmal (Mailserver: MX, SPF, DKIM, DMARC)
  *   verify(record) / waitFor(record)   bei öffentlichen Resolvern prüfen
+ *   acme.create / acme.remove          dns-01 für Hostwerks eigene Zertifikate (SDK 2.10: Livebetrieb → Zertifikate)
  *   acme.challengeCreateFn / challengeRemoveFn – dns-01 für acme-client (Let’s Encrypt, auch Wildcards)
+ *   names                              dynamische Namen (dynamic.js), sobald activate() sie angehängt hat
  */
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const R = require('./records');
 const V = require('./verify');
+const Z = require('./zonefile');
+const { dnssecStatus } = require('./dnssec');
 const { PROVIDERS, catalog } = require('./providers');
 
 const ZONE_CACHE_MS = 5 * 60 * 1000;
@@ -37,7 +41,19 @@ class DnsService {
     this.dir = dir; this.secrets = secrets; this.fetch = fetchFn || globalThis.fetch; this.resolver = resolver; this.ctx = ctx; this.log = log;
     fs.mkdirSync(dir, { recursive: true });
     this.zoneCache = new Map(); // accountId → { t, zones }
+    this.names = null; // DynamicNames – hängt activate() an
     this.acme = {
+      /**
+       * Hostwerk selbst (SDK 2.10, server/services/live/acme.js): { domain, name: '_acme-challenge.<domain>', value } –
+       * value ist schon der TXT-Wert. Legt den Eintrag NEBEN vorhandene (Domain + Wildcard) und wartet, bis die
+       * öffentlichen Resolver ihn sehen.
+       */
+      create: async ({ name, value }) => {
+        const rec = { name: R.strip(name), type: 'TXT', content: String(value), ttl: 60 };
+        await this.set(rec, { replace: false });
+        await V.waitFor(rec, { ...this.resolver, ...(this.acmeWait || {}) });
+      },
+      remove: async ({ name, value }) => this.remove({ name: R.strip(name), type: 'TXT', content: String(value) }),
       /** acme-client: challengeCreateFn(authz, challenge, keyAuthorization) – für dns-01 ist keyAuthorization schon der TXT-Wert. */
       challengeCreateFn: async (authz, challenge, keyAuthorization) => {
         if (!challenge || challenge.type !== 'dns-01') return;
@@ -183,6 +199,8 @@ class DnsService {
     else if (mode === 'tag') old = have.find((x) => R.txtTag(x.content) === R.txtTag(want.content));
     else if (mode === 'target') old = have.find((x) => R.contentKey(x) === R.contentKey(want));
     else old = have.find((x) => R.same(x, want));
+    // Den Cloudflare-Proxy eines vorhandenen Eintrags behalten, wenn der Aufrufer nichts dazu sagt (z. B. neue IP)
+    if (old && want.proxied === undefined && old.proxied !== undefined) want.proxied = old.proxied;
     if (old) return { action: 'updated', record: await c.update(zone, old.id, want, old) };
     return { action: 'created', record: await c.create(zone, want) };
   }
@@ -206,7 +224,65 @@ class DnsService {
     return out;
   }
 
-  verify(rec) { return V.verify(R.validate(rec), this.resolver); }
+  /** Prüfen bei öffentlichen Resolvern – und, wenn die Zone bekannt ist, direkt beim Namensserver des Anbieters. */
+  async verify(rec) {
+    const r = R.validate(rec);
+    let zone = null;
+    try { const { zones } = await this.zones(); const z = R.bestZone(r.name, zones); zone = z ? z.name : null; } catch { zone = null; }
+    return V.verify(r, { ...this.resolver, zone });
+  }
+
+  /* ---------------- Zonendatei, DNSSEC ---------------- */
+  async exportZone(accountId, zoneId) {
+    const { zone } = await this.zoneById(accountId, zoneId);
+    return { name: `${zone.name}.zone`, text: Z.exportZone(zone, await this.list(accountId, zoneId)) };
+  }
+  /**
+   * Zonendatei einlesen. apply = false: nur zeigen, was neu wäre. apply = true: Fehlendes anlegen (nichts löschen,
+   * nichts überschreiben – vorhandene gleiche Einträge bleiben, wie sie sind).
+   */
+  async importZone(accountId, zoneId, text, { apply = false } = {}) {
+    const { zone, account } = await this.zoneById(accountId, zoneId);
+    if (String(text || '').length > 512 * 1024) throw bad(400, 'The zone file is too large (at most 512 KB).');
+    const { records, errors } = Z.parseZone(text, zone.name);
+    const have = await this.client(account).list(zone);
+    const add = records.filter((r) => !have.some((h) => R.same(h, r)));
+    const same = records.length - add.length;
+    if (!apply) return { add, same, errors };
+    const c = this.client(account);
+    const done = [];
+    for (const r of add) {
+      try { await c.create(zone, r); done.push({ ...r, action: 'created' }); } catch (e) { done.push({ ...r, action: 'error', error: e.message }); }
+    }
+    return { add, same, errors, done };
+  }
+  /** DNSSEC: Stand im Netz (DoH) und – wenn der Anbieter sie nennt – die DS-Einträge für den Registrar. */
+  async dnssec(accountId, zoneId) {
+    const { zone } = await this.zoneById(accountId, zoneId);
+    const st = await dnssecStatus(zone.name, { fetch: this.fetch });
+    return { ...st, providerDs: (zone.dnssec && zone.dnssec.ds) || [] };
+  }
+
+  /* ---------------- Vorschläge aus Hostwerk ---------------- */
+  /** Adressen der Webserver (echte Domains) – mit der Zone, die sie verwaltet, falls verbunden. */
+  async sites() {
+    const web = this.ctx.web;
+    if (!web || typeof web.list !== 'function') return [];
+    let zones = [];
+    try { zones = (await this.zones()).zones; } catch { zones = []; }
+    const out = [];
+    for (const inst of web.list() || []) {
+      for (const v of inst.vhosts || []) {
+        for (const d of [v.domain, ...String(v.aliases || '').split(/\s+/)].map(R.strip).filter(Boolean)) {
+          if (!R.DOMAIN.test(d.replace(/^\*\./, 'x.')) || /(^|\.)(localhost|local|test|lan|home|internal)$/.test(d)) continue;
+          if (out.some((x) => x.domain === d)) continue;
+          const z = R.bestZone(d, zones);
+          out.push({ domain: d, web: inst.name || inst.id, zone: z ? { account: z.account, id: z.id, name: z.name } : null });
+        }
+      }
+    }
+    return out;
+  }
   waitFor(rec, opts = {}) { return V.waitFor(R.validate(rec), { ...this.resolver, ...opts }); }
 
   /* ---------------- Zusammenspiel ---------------- */
@@ -236,11 +312,17 @@ class DnsService {
     return { available: true, servers };
   }
 
-  /** Öffentliche Adressen über die Erweiterung „Router & Portfreigaben“ (für A/AAAA). */
+  /**
+   * Öffentliche Adressen dieses Anschlusses (für A/AAAA): über „Router & Portfreigaben“, sonst über die eigene
+   * Erkennung der dynamischen Namen (mehrere Quellen, feste IPv6).
+   */
   async publicAddress() {
     const r = this.ctx.router;
-    if (!r || typeof r.net !== 'function') return { available: false };
-    try { const n = await r.net(); return { available: true, v4: n.v4public || null, v6: (n.v6 && (n.v6.stable || n.v6.public)) || null }; } catch (e) { return { available: true, error: e.message }; }
+    if (r && typeof r.net === 'function') {
+      try { const n = await r.net(); if (n.v4public || (n.v6 && n.v6.stable)) return { available: true, via: 'router', v4: n.v4public || null, v6: (n.v6 && (n.v6.stable || n.v6.public)) || null }; } catch { /* eigene Erkennung */ }
+    }
+    if (!this.names) return { available: false };
+    try { const ip = await this.names.ips(); return { available: true, via: 'own', v4: ip.v4 || null, v6: ip.v6 || null }; } catch (e) { return { available: true, error: e.message }; }
   }
 }
 

@@ -160,10 +160,14 @@ test('activate: provides "dns", registers the routes, errors keep their status',
   mod.activate(host);
   assert.ok(provided.dns instanceof DnsService);
   assert.ok(fs.existsSync(path.join(dir, 'dns')));
-  for (const k of ['GET /dns', 'POST /dns/accounts', 'PUT /dns/accounts/:id', 'DELETE /dns/accounts/:id', 'GET /dns/zones', 'GET /dns/zones/:account/:zone/records', 'POST /dns/zones/:account/:zone/records', 'PUT /dns/zones/:account/:zone/records/:id', 'DELETE /dns/zones/:account/:zone/records/:id', 'POST /dns/verify', 'GET /dns/mail', 'POST /dns/apply', 'GET /dns/public-address']) assert.ok(routes[k], k);
+  for (const k of ['GET /dns', 'POST /dns/accounts', 'PUT /dns/accounts/:id', 'DELETE /dns/accounts/:id', 'GET /dns/zones', 'GET /dns/zones/:account/:zone/records', 'POST /dns/zones/:account/:zone/records', 'PUT /dns/zones/:account/:zone/records/:id', 'DELETE /dns/zones/:account/:zone/records/:id', 'POST /dns/verify', 'GET /dns/mail', 'POST /dns/apply', 'GET /dns/public-address',
+    'GET /dns/zones/:account/:zone/export', 'POST /dns/zones/:account/:zone/import', 'GET /dns/zones/:account/:zone/dnssec', 'GET /dns/sites',
+    'GET /dns/names', 'POST /dns/names', 'PUT /dns/names/:id', 'DELETE /dns/names/:id', 'POST /dns/names/:id/update', 'POST /dns/names/:id/check', 'POST /dns/names-router/take-over']) assert.ok(routes[k], k);
   let out = null;
   await routes['GET /dns']({}, { json: (x) => { out = x; } });
-  assert.deepStrictEqual(out.providers.map((p) => p.id), ['cloudflare', 'hetzner', 'inwx', 'ionos']);
+  assert.deepStrictEqual(out.providers.map((p) => p.id), ['cloudflare', 'desec', 'hetzner', 'inwx', 'ionos']);
+  assert.deepStrictEqual(out.dyn.map((p) => p.id), ['duckdns', 'desec', 'dynv6', 'freedns', 'noip']);
+  assert.ok(provided.dns.names, 'dynamic names are attached to the service');
   assert.strictEqual(out.mail, false);
   await assert.rejects(routes['DELETE /dns/accounts/:id']({ params: { id: 'x' } }, {}), (e) => e.status === 404);
   mod.deactivate();

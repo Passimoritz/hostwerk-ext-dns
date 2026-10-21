@@ -157,7 +157,7 @@ function fakeResolver(answers, byServer = {}) {
       if (v instanceof Error) throw v;
       return typeof v === 'function' ? v() : v;
     };
-    return { resolve4: get('A'), resolve6: get('AAAA'), resolveCname: get('CNAME'), resolveMx: get('MX'), resolveTxt: get('TXT'), resolveSrv: get('SRV'), resolveCaa: get('CAA') };
+    return { resolve4: get('A'), resolve6: get('AAAA'), resolveCname: get('CNAME'), resolveMx: get('MX'), resolveTxt: get('TXT'), resolveSrv: get('SRV'), resolveCaa: get('CAA'), resolveNs: get('NS') };
   };
 }
 
