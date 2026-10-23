@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Globe, Plus, Pencil, Trash2, RefreshCw, CheckCircle2, XCircle, Mail, KeyRound, ExternalLink, Router as RouterIcon, ListChecks, Server, Wand2, History, Download, Upload, ShieldCheck, ShieldAlert, Shield, Gift, Copy, ArrowLeft, Gamepad2, Clock } from 'lucide-react';
+import { Globe, Plus, Pencil, Trash2, RefreshCw, CheckCircle2, XCircle, Mail, KeyRound, ExternalLink, Router as RouterIcon, ListChecks, Server, Wand2, History, Download, Upload, ShieldCheck, ShieldAlert, Shield, Gift, Copy, ArrowLeft, Gamepad2, Clock, Search } from 'lucide-react';
 import { get, post, put, del, useApi } from '@hostwerk/api';
-import { Btn, Field, Modal, Empty, Loading, Callout, InfoTip, Switch, Tabs, toast, confirmDialog } from '@hostwerk/ui';
+import { Btn, Field, Modal, Empty, Loading, Callout, InfoTip, Switch, Tabs, TileEmpty, toast, confirmDialog } from '@hostwerk/ui';
 import { t } from '@hostwerk/i18n';
+import { useFill } from './fill';
 import './style.css';
 
 /*
@@ -618,6 +619,8 @@ function RecordsPanel({ zs, onAddProvider }) {
   const [tpl, setTpl] = useState(false);
   const [imp, setImp] = useState(false);
   const [filter, setFilter] = useState('');
+  // Viele Einträge: die Karte füllt die restliche Höhe, die Tabelle scrollt darin (Kopfzeile klebt), die Seite bleibt stehen
+  const fill = useFill({ min: 320 });
   useEffect(() => { if (zone && !zoneKey) setZoneKey(`${zone.account}/${zone.id}`); }, [zone, zoneKey]);
   const list = useMemo(() => { const q = filter.trim().toLowerCase(); const l = recs.data || []; return q ? l.filter((r) => `${r.name} ${r.type} ${r.content}`.toLowerCase().includes(q)) : l; }, [recs.data, filter]);
   const proxy = !!(zone && zone.provider === 'cloudflare');
@@ -629,7 +632,7 @@ function RecordsPanel({ zs, onAddProvider }) {
   if (!zs.data) return zs.error ? <Callout kind="err">{zs.error}</Callout> : <Loading />;
   if (!zone) return <div className="card"><Empty icon={Globe} title="No zones" text="Connect the provider of your domain – or a deSEC name – to edit records here." action={<Btn className="primary" icon={Plus} onClick={onAddProvider}>Add provider</Btn>} /></div>;
   return (
-    <div className="card">
+    <div className="card dns-records" ref={fill}>
       <div className="card-head dns-wrap">
         <ListChecks size={16} /><h3>Records</h3>
         <select className="select dns-zone" aria-label="Zone" value={`${zone.account}/${zone.id}`} onChange={(e) => setZoneKey(e.target.value)}>{zones.map((z) => <option key={`${z.account}/${z.id}`} value={`${z.account}/${z.id}`}>{z.name}</option>)}</select>
@@ -646,7 +649,7 @@ function RecordsPanel({ zs, onAddProvider }) {
         : !recs.data ? <div className="card-body"><Loading /></div> : (
           <>
             <div className="card-body dns-filter"><input className="input" value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Filter by name, type or value" aria-label="Filter" /></div>
-            {!list.length ? <div className="card-body small muted">{filter ? 'Nothing matches the filter.' : 'This zone has no records yet.'}</div> : (
+            {!list.length ? (filter ? <TileEmpty icon={Search} text="Nothing matches the filter." /> : <TileEmpty icon={ListChecks} text="This zone has no records yet." />) : (
               <div className="dns-table-wrap">
                 <table className="table dns-table">
                   <thead><tr><th>Name</th><th>Type</th><th>Value</th><th>TTL</th><th><span className="dns-sr">Actions</span></th></tr></thead>

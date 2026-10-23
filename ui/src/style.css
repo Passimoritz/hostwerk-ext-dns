@@ -4,6 +4,9 @@
 .dns-zone { max-width: 260px; }
 .dns-filter { padding-bottom: 0; }
 .dns-table-wrap { overflow-x: auto; }
+/* Einträge: Karte in Fensterhöhe (useFill), nur die Tabelle scrollt */
+.dns-records { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.dns-records .dns-table-wrap { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; }
 .dns-table td { vertical-align: middle; }
 .dns-value { max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dns-actions { white-space: nowrap; text-align: right; }
