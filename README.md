@@ -7,7 +7,9 @@ records of your domains right at Cloudflare, deSEC, Hetzner, INWX or IONOS (A, A
 templates, checks, DNSSEC status and zone files. Other extensions use the service, e.g. the mail server for
 SPF/DKIM/DMARC and Let’s Encrypt for wildcard certificates (dns-01).
 
-[Deutsch](README.de.md) · An official [Hostwerk](https://github.com/Passimoritz/hostwerk-public) extension (SDK 2.7, native extension)
+[Deutsch](README.de.md) · An official [Hostwerk](https://github.com/Passimoritz/hostwerk-public) extension (native extension, Hostwerk 2.11 or newer)
+
+![Screenshot](docs/screenshot.png)
 
 ## What it does
 

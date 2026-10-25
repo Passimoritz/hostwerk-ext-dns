@@ -7,7 +7,9 @@ DNS-Einträge deiner Domains direkt bei Cloudflare, deSEC, Hetzner, INWX oder IO
 Vorlagen, Prüfung, DNSSEC-Stand und Zonendatei. Andere Erweiterungen nutzen den Dienst, z. B. der Mailserver für
 SPF/DKIM/DMARC und Let’s Encrypt für Wildcard-Zertifikate (dns-01).
 
-[English](README.md) · Eine offizielle [Hostwerk](https://github.com/Passimoritz/hostwerk-public) Erweiterung (SDK 2.7, native Erweiterung)
+[English](README.md) · Offizielle [Hostwerk](https://github.com/Passimoritz/hostwerk-public)-Erweiterung (native Erweiterung, ab Hostwerk 2.11)
+
+![Bildschirmfoto](docs/screenshot.de.png)
 
 ## Was sie kann
 
