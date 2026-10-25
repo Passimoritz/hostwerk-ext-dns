@@ -309,3 +309,24 @@ test('names: DynDNS of “Router & port forwarding” is never updated twice and
   await assert.rejects(s2.names.takeOverRouter(), /dynv6 does not accept/);
   assert.strictEqual(cfg2.router.dyndns.provider, 'dynv6');
 });
+
+test('names: DynDNS of the router is taken over by itself on start (1.3.0) – a failure leaves the router as it was', async () => {
+  const cfg = { router: { dyndns: { provider: 'duckdns', domain: 'srv', token: F.secrets.seal('good-token'), last: null } } };
+  const s = setup({ settings: { get: () => cfg, save: () => {} } });
+  const r = await s.names.autoTakeOverRouter();
+  assert.strictEqual(r.host.name, 'srv.duckdns.org');
+  assert.strictEqual(cfg.router.dyndns.provider, '');
+  assert.ok(s.sent.some((m) => m.kind === 'ok' && m.title === 'DynDNS moved to DNS management' && m.lines[0].name === 'srv.duckdns.org'));
+  assert.strictEqual(await s.names.autoTakeOverRouter(), null, 'nothing left to take over');
+  // Eigener Anbieter (Adresse mit {ip4}) gibt es hier nicht – bleibt beim Router, kein Fehler
+  const cfg2 = { router: { dyndns: { provider: 'custom', domain: 'x.example.org', url: 'https://x.example.org/u?ip={ip4}', token: '', last: null } } };
+  const s2 = setup({ settings: { get: () => cfg2, save: () => {} } });
+  assert.strictEqual(await s2.names.autoTakeOverRouter(), null);
+  assert.strictEqual(cfg2.router.dyndns.provider, 'custom');
+  // Falscher Token: Router aktualisiert weiter, keine Meldung
+  const cfg3 = { router: { dyndns: { provider: 'dynv6', domain: 'x.dynv6.net', token: F.secrets.seal('nope'), last: { ok: true } } } };
+  const s3 = setup({ settings: { get: () => cfg3, save: () => {} } });
+  assert.strictEqual(await s3.names.autoTakeOverRouter(), null);
+  assert.strictEqual(cfg3.router.dyndns.provider, 'dynv6');
+  assert.strictEqual(s3.sent.length, 0);
+});

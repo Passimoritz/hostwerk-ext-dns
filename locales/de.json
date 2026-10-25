@@ -396,5 +396,8 @@
       "deSEC: {}"
     ]
   ],
-  "DNS records": "DNS-Einträge"
+  "DNS records": "DNS-Einträge",
+  "DynDNS moved to DNS management": "DynDNS ist in die DNS-Verwaltung umgezogen",
+  "is now kept up to date here": "wird jetzt hier aktuell gehalten",
+  "DynDNS is no longer part of “Router & port forwarding” – the name and token moved here.": "DynDNS gehört nicht mehr zu „Router & Portfreigaben“ – Name und Token sind hierher umgezogen."
 }

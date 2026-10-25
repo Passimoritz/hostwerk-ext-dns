@@ -9,7 +9,7 @@
     "de": "Kostenlose Namen für deinen Anschluss (DuckDNS, deSEC, dynv6, FreeDNS, No-IP) oder deine eigene Domain bei Cloudflare, deSEC, Hetzner, INWX oder IONOS – Hostwerk hält sie wartungsfrei aktuell, wenn sich IPv4 oder IPv6 ändern. Dazu alle Einträge (A, AAAA, CNAME, MX, TXT, SRV, CAA) mit Vorlagen, Prüfung, DNSSEC-Stand und Zonendatei. Andere Erweiterungen nutzen den Dienst, z. B. der Mailserver und Let’s Encrypt für Wildcard-Zertifikate (dns-01).",
     "en": "Free names for your connection (DuckDNS, deSEC, dynv6, FreeDNS, No-IP) or your own domain at Cloudflare, deSEC, Hetzner, INWX or IONOS – Hostwerk keeps them up to date without maintenance when IPv4 or IPv6 change. Plus all records (A, AAAA, CNAME, MX, TXT, SRV, CAA) with templates, checks, DNSSEC status and zone files. Other extensions use the service, e.g. the mail server and Let’s Encrypt for wildcard certificates (dns-01)."
   },
-  "version": "1.2.2",
+  "version": "1.3.0",
   "author": "Hostwerk",
   "homepage": "https://github.com/Passimoritz/hostwerk-ext-dns",
   "license": "MIT",

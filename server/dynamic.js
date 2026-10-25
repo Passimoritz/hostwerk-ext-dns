@@ -314,9 +314,25 @@ class DynamicNames {
     } catch (e) { this.log('dns notify:', e.message); }
   }
 
+  /**
+   * Seit 1.3.0 gibt es DynDNS nur noch hier: einen Namen aus „Router & Portfreigaben“ einmal von selbst übernehmen.
+   * Klappt es nicht (z. B. Token abgelaufen), aktualisiert der Router weiter wie bisher und der Knopf bleibt.
+   */
+  async autoTakeOverRouter() {
+    const r = this.routerDyn();
+    if (!r || !r.canTakeOver) return null;
+    try {
+      const res = await this.takeOverRouter();
+      if (typeof this.notifier.notify === 'function') {
+        try { await this.notifier.notify({ kind: 'ok', title: 'DynDNS moved to DNS management', lines: [{ name: res.host.name, error: 'is now kept up to date here' }], tail: 'DynDNS is no longer part of “Router & port forwarding” – the name and token moved here.' }); } catch { /* ohne Meldung */ }
+      }
+      return res;
+    } catch (e) { this.log('dns take-over:', e.message); return null; }
+  }
+
   /* ---------------- Zeitgeber ---------------- */
   start() {
-    this.timer = setTimeout(() => this.tick().catch((e) => this.log('dns tick:', e.message)), 30000);
+    this.timer = setTimeout(() => this.autoTakeOverRouter().catch(() => null).then(() => this.tick()).catch((e) => this.log('dns tick:', e.message)), 30000);
     this.interval = setInterval(() => this.tick().catch((e) => this.log('dns tick:', e.message)), TICK_MS);
     for (const x of [this.timer, this.interval]) if (x && x.unref) x.unref();
   }

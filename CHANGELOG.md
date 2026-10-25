@@ -1,3 +1,9 @@
+# Changelog
+
+## 1.3.0
+
+- DynDNS lives only here now: a name from "Router & port forwarding" is taken over by itself on start (token included, one notification); if that fails, the router keeps updating it as before. / DynDNS gibt es nur noch hier: Ein Name aus „Router & Portfreigaben“ wird beim Start von selbst übernommen (samt Token, eine Benachrichtigung); klappt das nicht, aktualisiert der Router ihn weiter wie bisher.
+
 ## 1.2.2
 
 - New animated icon and banner in the common Hostwerk style (isometric block). / Neues animiertes Symbol und Banner im gemeinsamen Hostwerk-Stil (isometrischer Block).

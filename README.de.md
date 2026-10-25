@@ -62,9 +62,10 @@ weiterführt. No-IP gibt es nur als Alternative, deutlich gekennzeichnet.
 | **Minecraft → Server → Verbinden** | Der kostenlose Name mit Port zum Kopieren, **Eigene Adresse** legt A/AAAA (+ SRV) in deiner Domain an |
 | **Livebetrieb → Domains & HTTPS** | Hostwerk nutzt `ctx.dns.acme.create/remove` für Wildcard-Zertifikate und ohne Port 80 |
 
-„Router & Portfreigaben“ behält seine eigene, einfache DynDNS-Einstellung – sie funktioniert weiter. Ein Name wird nie von
-beiden aktualisiert: Die DNS-Seite zeigt den Namen des Routers und holt ihn mit **Hier aktuell halten** hierher (der Token
-zieht verschlüsselt mit um, die Router-Einstellung wird abgeschaltet).
+DynDNS gibt es seit 1.3.0 nur noch hier. Einen Namen, den du früher in „Router & Portfreigaben“ eingerichtet hast, übernimmt
+die DNS-Verwaltung beim Start von selbst (der Token zieht verschlüsselt mit um, die Router-Einstellung wird abgeschaltet, eine
+Benachrichtigung sagt Bescheid). Klappt das nicht – etwa mit abgelaufenem Token oder eigener Update-Adresse –, aktualisiert der
+Router ihn weiter, und **Hier aktuell halten** holt ihn später. Ein Name wird nie von beiden aktualisiert.
 
 ## Für andere Erweiterungen: der Dienst `dns`
 

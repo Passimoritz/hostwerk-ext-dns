@@ -60,9 +60,10 @@ account. No-IP is offered only as an alternative and is clearly marked.
 | **Minecraft → server → Connect** | The free name with port to copy, **Own address** creates A/AAAA (+ SRV) in your domain |
 | **Live → Domains & HTTPS** | Hostwerk uses `ctx.dns.acme.create/remove` for wildcard certificates and without port 80 |
 
-“Router & port forwarding” keeps its own simple DynDNS setting – it still works. A name is never updated by both: the DNS
-page shows the router’s name and moves it here with **Keep it up to date here** (the token moves along encrypted, the
-router setting is switched off).
+DynDNS lives only here since 1.3.0. A name you set up earlier in “Router & port forwarding” is taken over by itself on
+start (the token moves along encrypted, the router setting is switched off, one notification says so). If that fails – an
+expired token or an own update address –, the router keeps updating it, and **Keep it up to date here** moves it later. A
+name is never updated by both.
 
 ## For other extensions: the service `dns`
 
