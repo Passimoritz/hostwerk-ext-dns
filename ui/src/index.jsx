@@ -12,7 +12,8 @@ import './style.css';
  *              Prüfung und Protokoll; Assistent „Ich habe keine Domain / Ich habe eine Domain“
  *   Einträge   alle Einträge je Zone (anlegen, ändern, löschen, prüfen), Vorlagen, Zonendatei, DNSSEC
  *   Anbieter   Zugänge und – wenn die Erweiterung „Mailserver“ da ist – deren MX/SPF/DKIM/DMARC mit einem Klick
- * Dazu zwei Einbau-Orte in Hostwerk: Livebetrieb → DNS (Namen + Domains der Webserver) und Minecraft → eigene Adresse.
+ * Dazu zwei Einbau-Orte in Hostwerk: Livebetrieb → Online → DNS (Namen + Domains der Webserver; ältere Hostwerk: Reiter
+ * Livebetrieb → DNS) und Minecraft → eigene Adresse.
  * Texte sind Englisch; Deutsch kommt aus locales/de.json (auch in JSX).
  */
 const TYPES = ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'SRV', 'CAA'];
@@ -828,12 +829,15 @@ function McAddress({ s }) {
 export default {
   pages: { main: DnsPage },
   slots: {
-    // Livebetrieb: direkt hinter „Domains & HTTPS“, Gruppe „Erreichbar machen“
-    'live.tabs': [{ id: 'dns', title: 'DNS', icon: Globe, Component: LiveDnsTab, after: 'domains', group: 'erreichbar', order: 25 }],
+    // Ältere Hostwerk (vor SDK 3.11): Reiter im Livebetrieb direkt hinter „Domains & HTTPS“, Gruppe „Erreichbar machen“.
+    // fallback: true – Hostwerk 3.11 und neuer lassen ihn weg (Abschnitt live.online unten), ältere zeigen ihn wie bisher.
+    'live.tabs': [{ id: 'dns', title: 'DNS', icon: Globe, Component: LiveDnsTab, after: 'domains', group: 'erreichbar', order: 25, fallback: true }],
     'mc.connect': [{ id: 'dns-name', title: 'Own address', Component: McAddress, order: 45 }],
   },
   // Webserver → Übersicht: „DNS-Eintrag anlegen“ für die Domains dieses Webservers (Hostwerk 3.0+ mit SDK 3.2)
   sections: {
+    // Hostwerk mit SDK 3.11: Abschnitt in Livebetrieb → Online (#/live/online/dns)
+    'live.online': [{ id: 'dns', title: 'DNS', icon: Globe, Component: LiveDnsTab, order: 25 }],
     'web.site': [{ id: 'dns', title: 'DNS records', icon: Globe, Component: WebSiteDns, when: (ctx) => hasDnsZone(ctx && ctx.id), order: 40 }],
   },
 };

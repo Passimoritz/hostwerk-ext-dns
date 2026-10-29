@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0
+
+- Go live in five areas (Hostwerk with SDK 3.11): DNS is a section in Go live → Online (#/live/online/dns); older Hostwerk versions keep the tab under “Make reachable”. / Livebetrieb in fünf Bereichen (Hostwerk mit SDK 3.11): DNS ist ein Abschnitt unter Livebetrieb → Online (#/live/online/dns); ältere Hostwerk-Versionen behalten den Reiter unter „Erreichbar machen“.
+
 ## 1.3.0
 
 - DynDNS lives only here now: a name from "Router & port forwarding" is taken over by itself on start (token included, one notification); if that fails, the router keeps updating it as before. / DynDNS gibt es nur noch hier: Ein Name aus „Router & Portfreigaben“ wird beim Start von selbst übernommen (samt Token, eine Benachrichtigung); klappt das nicht, aktualisiert der Router ihn weiter wie bisher.

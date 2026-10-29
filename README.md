@@ -13,7 +13,7 @@ SPF/DKIM/DMARC and Let’s Encrypt for wildcard certificates (dns-01).
 
 ## What it does
 
-- **Where:** Go live → Make reachable → DNS, the address card of every Minecraft server and – new – the section “DNS records” of a web server – no own sidebar entry since 1.2.0; the full page stays under Extensions → Open
+- **Where:** Go live → Online → DNS (older Hostwerk: Make reachable → DNS), the address card of every Minecraft server and – new – the section “DNS records” of a web server – no own sidebar entry since 1.2.0; the full page stays under Extensions → Open
 - **Set up a name** – assistant with two ways: *“I have no domain”* (free name, step by step with the sign-up link, paste
   the token) or *“I have a domain”* (pick the provider, connect, optionally let one name follow this connection)
 - **Maintenance-free names**: every 5 minutes Hostwerk looks at the public address (several sources without an account;
@@ -56,9 +56,9 @@ account. No-IP is offered only as an alternative and is clearly marked.
 | Place | What |
 |---|---|
 | **DNS** (own page) | Names, records, providers – the full management |
-| **Live → DNS** (next to *Domains & HTTPS*) | Names with status and “update now”, the domains of your web servers with **Create DNS record** |
+| **Go live → Online → DNS** (next to the addresses) | Names with status and “update now”, the domains of your web servers with **Create DNS record** |
 | **Minecraft → server → Connect** | The free name with port to copy, **Own address** creates A/AAAA (+ SRV) in your domain |
-| **Live → Domains & HTTPS** | Hostwerk uses `ctx.dns.acme.create/remove` for wildcard certificates and without port 80 |
+| **Go live → Online** (addresses and HTTPS) | Hostwerk uses `ctx.dns.acme.create/remove` for wildcard certificates and without port 80 |
 
 DynDNS lives only here since 1.3.0. A name you set up earlier in “Router & port forwarding” is taken over by itself on
 start (the token moves along encrypted, the router setting is switched off, one notification says so). If that fails – an
@@ -133,7 +133,7 @@ For an own ACME implementation, `dns.acme.txtValue(keyAuthorization)` gives the 
 - IPv6: a name only gets an AAAA record when the fixed IPv6 of this PC is reachable from outside (same /64 as the address
   the internet sees). Without IPv6 to the outside existing AAAA records stay untouched.
 - The check talks to public resolvers over DNS (UDP/TCP 53) and – for DNSSEC – over DNS-over-HTTPS (Cloudflare, Google).
-- Hostwerk’s own certificate function (*Live → Domains & HTTPS*) uses `ctx.dns.acme.create/remove` since Hostwerk 2.12; older
+- Hostwerk’s own certificate function (*Go live → Online*) uses `ctx.dns.acme.create/remove` since Hostwerk 2.12; older
   versions only know http-01.
 - The mail server extension does not set its records itself yet – use the button on the Providers tab or `dns.apply()`.
 - Zones are cached for 5 minutes; *Reload* fetches them again.

@@ -13,7 +13,7 @@ SPF/DKIM/DMARC und Let’s Encrypt für Wildcard-Zertifikate (dns-01).
 
 ## Was sie kann
 
-- **Wo:** Livebetrieb → Erreichbar machen → DNS, Adress-Karte jedes Minecraft-Servers und – neu – Abschnitt „DNS-Einträge“ eines Webservers – seit 1.2.0 ohne eigenen Seitenleisten-Eintrag; die ganze Seite bleibt unter Erweiterungen → Öffnen
+- **Wo:** Livebetrieb → Online → DNS (ältere Hostwerk: Erreichbar machen → DNS), Adress-Karte jedes Minecraft-Servers und – neu – Abschnitt „DNS-Einträge“ eines Webservers – seit 1.2.0 ohne eigenen Seitenleisten-Eintrag; die ganze Seite bleibt unter Erweiterungen → Öffnen
 - **Namen einrichten** – Assistent mit zwei Wegen: *„Ich habe keine Domain“* (kostenloser Name, Schritt für Schritt mit
   Link zur Anmeldung, Token einfügen) oder *„Ich habe eine Domain“* (Anbieter wählen, verbinden, freiwillig einen Namen
   diesem Anschluss folgen lassen)
@@ -58,9 +58,9 @@ weiterführt. No-IP gibt es nur als Alternative, deutlich gekennzeichnet.
 | Ort | Was |
 |---|---|
 | **DNS** (eigene Seite) | Namen, Einträge, Anbieter – die volle Verwaltung |
-| **Livebetrieb → DNS** (neben *Domains & HTTPS*) | Namen mit Stand und „Jetzt aktualisieren“, die Domains deiner Webserver mit **DNS-Eintrag anlegen** |
+| **Livebetrieb → Online → DNS** (neben den Adressen) | Namen mit Stand und „Jetzt aktualisieren“, die Domains deiner Webserver mit **DNS-Eintrag anlegen** |
 | **Minecraft → Server → Verbinden** | Der kostenlose Name mit Port zum Kopieren, **Eigene Adresse** legt A/AAAA (+ SRV) in deiner Domain an |
-| **Livebetrieb → Domains & HTTPS** | Hostwerk nutzt `ctx.dns.acme.create/remove` für Wildcard-Zertifikate und ohne Port 80 |
+| **Livebetrieb → Online** (Adressen und HTTPS) | Hostwerk nutzt `ctx.dns.acme.create/remove` für Wildcard-Zertifikate und ohne Port 80 |
 
 DynDNS gibt es seit 1.3.0 nur noch hier. Einen Namen, den du früher in „Router & Portfreigaben“ eingerichtet hast, übernimmt
 die DNS-Verwaltung beim Start von selbst (der Token zieht verschlüsselt mit um, die Router-Einstellung wird abgeschaltet, eine
@@ -136,7 +136,7 @@ Für eine eigene ACME-Umsetzung liefert `dns.acme.txtValue(keyAuthorization)` de
 - IPv6: Ein Name bekommt nur dann einen AAAA-Eintrag, wenn die feste IPv6 dieses PCs von außen erreichbar ist (gleiches
   /64 wie die Adresse, die das Internet sieht). Ohne IPv6 nach draußen bleiben vorhandene AAAA-Einträge unangetastet.
 - Die Prüfung fragt öffentliche Resolver per DNS (UDP/TCP 53) und – für DNSSEC – per DNS-over-HTTPS (Cloudflare, Google).
-- Hostwerks eigene Zertifikatsfunktion (*Livebetrieb → Domains & HTTPS*) nutzt `ctx.dns.acme.create/remove` ab Hostwerk 2.12;
+- Hostwerks eigene Zertifikatsfunktion (*Livebetrieb → Online*) nutzt `ctx.dns.acme.create/remove` ab Hostwerk 2.12;
   ältere Versionen kennen nur http-01.
 - Die Mailserver-Erweiterung setzt ihre Einträge noch nicht selbst – dafür den Knopf im Reiter Anbieter oder `dns.apply()` nutzen.
 - Zonen werden 5 Minuten zwischengespeichert; *Neu laden* holt sie neu.
