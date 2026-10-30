@@ -750,7 +750,7 @@ function DnsPage() {
   );
 }
 
-/* ---------------- Einbau: Livebetrieb → DNS ---------------- */
+/* ---------------- Einbau: Livebetrieb → Online → DNS ---------------- */
 // webId = nur die Domains dieses Webservers (Abschnitt auf seiner Detailseite, ohne eigenen Kartenkopf – den zeichnet Hostwerk)
 function SitesCard({ webId = null }) {
   const s = useApi('/dns/sites', [], { live: false, poll: false });
