@@ -9,6 +9,11 @@
 .dns-records .dns-table-wrap { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; }
 .dns-table td { vertical-align: middle; }
 .dns-value { max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Sehr lange Namen (bis 253 Zeichen) schieben sonst Wert, TTL und Aktionen aus dem Bild – voller Name im Tooltip */
+.dns-name { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dns-type { white-space: nowrap; }
+/* Abschnitt in Livebetrieb → Online: Hostwerks Abschnittskarte hat keinen Innenabstand */
+.ext-section-body > .dns-live { padding: var(--sp-3) var(--sp-4) var(--sp-4); }
 .dns-actions { white-space: nowrap; text-align: right; }
 .dns-domain { display: flex; flex-direction: column; gap: var(--sp-1); }
 .dns-mailrow { min-width: 0; }
@@ -27,3 +32,4 @@
 .dns-addr > div > span { min-width: 36px; }
 .dns-preview { display: flex; flex-direction: column; gap: 2px; padding: var(--sp-2); border: 1px solid var(--line); border-radius: var(--r-md); white-space: pre; overflow-x: auto; }
 .dns-sec { display: inline-flex; align-items: center; gap: var(--sp-1); cursor: pointer; border: none; font: inherit; min-height: 24px; }
+.dns-type-filter { width: auto; flex: none; }

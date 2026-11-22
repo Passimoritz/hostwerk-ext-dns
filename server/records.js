@@ -20,12 +20,17 @@ const DOMAIN = /^(?=.{3,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z0-
 // Englischer Text mit eingesetzten Werten – Hostwerk übersetzt ihn über "$patterns" in locales/de.json
 const fill = (s, vars) => (vars ? String(s).replace(/\{(\w+)\}/g, (m, k) => (vars[k] !== undefined ? String(vars[k]) : m)) : s);
 const bad = (text, vars) => Object.assign(new Error(fill(text, vars)), { status: 400 });
-const strip = (s) => String(s || '').trim().replace(/\.+$/, '').toLowerCase();
+/**
+ * Umlaut-Domains: Eingaben wie „müller.example“ oder „wöö“ werden zu Punycode („xn--mller-kva.example“) – so speichern
+ * sie die Anbieter. Je Teil, damit auch „*.müller.example“ und einzelne Namen in der Zone gehen.
+ */
+const ascii = (s) => (/[^\x00-\x7f]/.test(s) ? s.split('.').map((l) => (/[^\x00-\x7f]/.test(l) ? require('url').domainToASCII(l) || l : l)).join('.') : s);
+const strip = (s) => ascii(String(s || '').trim().replace(/\.+$/, '').toLowerCase());
 
 /** Name in der Zone → vollständiger Name: "@" / "" → Zone, "www" → "www.example.com", vollständige Namen bleiben. */
 function fqdn(name, zone) {
   const z = strip(zone);
-  const n = String(name || '').trim();
+  const n = ascii(String(name || '').trim());
   if (!n || n === '@') return z;
   if (n.endsWith('.') || !z) return strip(n);
   const s = n.toLowerCase();

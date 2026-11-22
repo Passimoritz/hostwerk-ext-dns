@@ -41,6 +41,7 @@ const ZONE_TTL = 300;
 const ROUTER_KINDS = { duckdns: 'duckdns', dynv6: 'dynv6', desec: 'desec' };
 
 const bad = (status, text) => Object.assign(new Error(text), { status });
+const NO_ADDRESS = 'No public address found to set – check the internet connection and that IPv4 or IPv6 is switched on.';
 
 class DynamicNames {
   /**
@@ -131,6 +132,7 @@ class DynamicNames {
     const p = DYN[kind];
     if (!p && kind !== 'zone') throw bad(400, 'Unknown DynDNS provider.');
     const name = old ? old.name : fullName(kind, b.name);
+    if (!name) throw bad(400, 'Please enter a name.');
     if (!R.DOMAIN.test(name)) throw bad(400, `“${name}” is not a valid name.`);
     if (!old && d.hosts.some((h) => h.name === name)) throw bad(400, 'This name is already in the list.');
     const r = this.routerDyn();
@@ -159,7 +161,8 @@ class DynamicNames {
     const res = await this.push(h, ip, { force: true, reason: old ? 'changed' : 'added' });
     if (res.error && (res.errorKind === 'auth' || res.errorKind === 'config')) throw bad(400, res.error);
     this.edit((x) => { x.hosts = old ? x.hosts.map((y) => (y.id === h.id ? h : y)) : [...x.hosts, h]; x.ip = ip; });
-    return { host: this.pub(h), warning: res.error || null };
+    // Ohne erkannte Adresse ist nichts gesetzt – nicht „zeigt jetzt hierher“ melden
+    return { host: this.pub(h), warning: res.error || (res.action === 'skipped' ? NO_ADDRESS : null) };
   }
 
   remove(id) { this.host(id); this.edit((d) => { d.hosts = d.hosts.filter((x) => x.id !== id); }); }
@@ -257,7 +260,8 @@ class DynamicNames {
     d.ip = ip;
     this.save(d);
     await this.report(d);
-    return { ...r, host: this.pub(h) };
+    // „Übersprungen“ heißt hier: keine Adresse zum Setzen – sonst meldet die Oberfläche „ist aktuell“
+    return { ...r, ...(r.action === 'skipped' ? { error: NO_ADDRESS } : {}), host: this.pub(h) };
   }
 
   /** Ein Durchlauf: Adressen erkennen, geänderte Namen setzen, ab und zu prüfen, Probleme melden. */

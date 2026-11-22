@@ -217,6 +217,7 @@ class DnsService {
 
   /** Viele Einträge setzen – jeder für sich, ein Fehler hält die anderen nicht auf. replace je Eintrag wie bei set(). */
   async apply(records) {
+    if (records !== undefined && records !== null && !Array.isArray(records)) throw bad(400, 'The records must be a list.');
     const out = [];
     for (const r of records || []) {
       const opts = r && ['tag', 'type', 'target', false].includes(r.replace) ? { replace: r.replace } : {};

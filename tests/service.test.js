@@ -77,6 +77,8 @@ test('set: no duplicates – SPF/DMARC replaced by tag, MX by target, CNAME by n
   const res = await svc.apply([{ name: '_dmarc.example.com', type: 'TXT', content: 'v=DMARC1; p=none' }, { name: 'example.com', type: 'A', content: 'no-ip' }, { name: 'example.com', type: 'CAA', content: '0 issue "letsencrypt.org"' }]);
   assert.deepStrictEqual(res.map((r) => r.action), ['created', 'error', 'created']);
   assert.match(res[1].error, /IPv4/);
+  // Kein Array (z. B. ein Text) → 400 statt Buchstabe für Buchstabe als „Eintrag“
+  await assert.rejects(svc.apply('kaputt'), (e) => e.status === 400);
 });
 
 test('verify: every public resolver is asked; partly there = not ok yet', async () => {

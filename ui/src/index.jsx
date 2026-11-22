@@ -4,6 +4,8 @@ import { get, post, put, del, useApi } from '@hostwerk/api';
 import { Btn, Field, Modal, Empty, Loading, Callout, InfoTip, Switch, Tabs, TileEmpty, toast, confirmDialog } from '@hostwerk/ui';
 import { t } from '@hostwerk/i18n';
 import { useFill } from './fill';
+import { showDomain } from './idn';
+import { sortRecords } from './sort';
 import './style.css';
 
 /*
@@ -125,7 +127,7 @@ function Wizard({ data, onClose, onDone, start = null }) {
     try {
       const r = await post('/dns/names', { kind, name, creds, v4, v6 });
       if (dyn.records && alsoRecords) { try { await post('/dns/accounts', { provider: 'desec', name: r.host.name, creds: { token: creds.token } }); } catch (e) { toast.error(e); } }
-      if (r.warning) toast.error(t('Saved, but: {e}', { e: r.warning })); else toast.success(t('{name} now points to this connection.', { name: r.host.name }));
+      if (r.warning) toast.error(t('Saved, but: {e}', { e: t(r.warning) })); else toast.success(t('{name} now points to this connection.', { name: r.host.name }));
       onDone(); onClose();
     } catch (e) { toast.error(e); }
   };
@@ -143,7 +145,7 @@ function Wizard({ data, onClose, onDone, start = null }) {
   const saveZoneName = async () => {
     try {
       const r = await post('/dns/names', { kind: 'zone', name: full(sub.trim(), zone.name), v4, v6 });
-      toast.success(t('{name} now points to this connection.', { name: r.host.name }));
+      if (r.warning) toast.error(t('Saved, but: {e}', { e: t(r.warning) })); else toast.success(t('{name} now points to this connection.', { name: r.host.name }));
       onDone(); onClose();
     } catch (e) { toast.error(e); }
   };
@@ -223,12 +225,12 @@ function Wizard({ data, onClose, onDone, start = null }) {
     );
     footer = <>{back('domain')}<Btn className="primary" icon={KeyRound} disabled={missingCreds(prov.fields, creds)} onClick={saveAccount}>Check and save</Btn></>;
   } else if (step === 'domain-name') {
-    body = !zones.data ? <Loading /> : !myZones.length ? <Callout kind="warn" dismissible={false}>The account has no domains (or the key may not read them).</Callout> : (
+    body = zones.error ? <Callout kind="err" dismissible={false}>{zones.error}</Callout> : !zones.data ? <Loading /> : !myZones.length ? <Callout kind="warn" dismissible={false}>The account has no domains (or the key may not read them).</Callout> : (
       <div className="stack">
         <p className="small muted">Optional: let one name of your domain always point to this connection – Hostwerk updates it when your address changes.</p>
         <div className="grid grid-2">
-          <Field label="Domain"><select className="select" value={zone.id} onChange={(e) => setZoneId(e.target.value)}>{myZones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}</select></Field>
-          <Field label="Name" hint={`@ = ${zone.name}`}><input className="input mono" value={sub} onChange={(e) => setSub(e.target.value)} placeholder="home" /></Field>
+          <Field label="Domain"><select className="select" value={zone.id} onChange={(e) => setZoneId(e.target.value)}>{myZones.map((z) => <option key={z.id} value={z.id}>{showDomain(z.name)}</option>)}</select></Field>
+          <Field label="Name" hint={`@ = ${showDomain(zone.name)}`}><input className="input mono" value={sub} onChange={(e) => setSub(e.target.value)} placeholder="home" /></Field>
         </div>
         <div className="row-tight dns-wrap">
           <label className="check"><Switch checked={v4} onChange={setV4} /> IPv4 (A)</label>
@@ -300,7 +302,7 @@ export function NamesPanel({ data, compact = false, onWizard }) {
   if (!n.data) return n.error ? <Callout kind="err">{n.error}</Callout> : <Loading />;
   const { hosts, ip, router } = n.data;
   const reload = () => n.reload({ silent: true });
-  const updateNow = async (h) => { try { const r = await post(`/dns/names/${enc(h.id)}/update`); if (r.error) toast.error(r.error); else toast.success(t('{name} is up to date.', { name: h.name })); reload(); } catch (e) { toast.error(e); } };
+  const updateNow = async (h) => { try { const r = await post(`/dns/names/${enc(h.id)}/update`); if (r.error) toast.error(t(r.error)); else toast.success(t('{name} is up to date.', { name: h.name })); reload(); } catch (e) { toast.error(e); } };
   const check = async (h) => {
     try {
       const c = await post(`/dns/names/${enc(h.id)}/check`);
@@ -340,7 +342,7 @@ export function NamesPanel({ data, compact = false, onWizard }) {
         ) : hosts.map((h) => (
           <div key={h.id} className="list-item">
             <div className="grow" style={{ minWidth: 0 }}>
-              <div className="row-tight dns-wrap"><b className="mono ellipsis">{h.name}</b><span className="badge">{h.kind === 'zone' ? t('own domain') : h.label}</span><NameState h={h} />{h.maintenance === 'monthly' && <span className="badge warn" title={t('No-IP deletes free hostnames that are not confirmed every 30 days.')}>confirm every 30 days</span>}</div>
+              <div className="row-tight dns-wrap"><b className="mono ellipsis" title={h.name}>{showDomain(h.name)}</b><span className="badge">{h.kind === 'zone' ? t('own domain') : h.label}</span><NameState h={h} />{h.maintenance === 'monthly' && <span className="badge warn" title={t('No-IP deletes free hostnames that are not confirmed every 30 days.')}>confirm every 30 days</span>}</div>
               <div className="small muted ellipsis">{h.state.error ? t(h.state.error) : [h.state.ip4, h.state.ip6].filter(Boolean).join(' · ') || t('not set yet')}{h.state.t ? ` · ${ago(h.state.t)}` : ''}{h.state.check ? ` · ${h.state.check.ok ? t('seen everywhere') : t('not seen everywhere yet')}` : ''}</div>
             </div>
             <Btn className="xs ghost icon" icon={RefreshCw} title="Update now" aria-label="Update now" onClick={() => updateNow(h)} />
@@ -360,7 +362,7 @@ export function NamesPanel({ data, compact = false, onWizard }) {
 /* ---------------- Eintrag anlegen / ändern ---------------- */
 function RecordForm({ zone, record, proxy, onClose, onSaved }) {
   const isNew = !record;
-  const [f, setF] = useState(() => (record ? { ...record, name: rel(record.name, zone.name) } : { name: '@', type: 'A', content: '', ttl: 3600, priority: '' }));
+  const [f, setF] = useState(() => (record ? { ...record, name: showDomain(rel(record.name, zone.name)) } : { name: '@', type: 'A', content: '', ttl: 3600, priority: '' }));
   const set = (k, v) => setF({ ...f, [k]: v });
   const prio = f.type === 'MX' || f.type === 'SRV';
   const own = async () => {
@@ -380,10 +382,10 @@ function RecordForm({ zone, record, proxy, onClose, onSaved }) {
     } catch (e) { toast.error(e); }
   };
   return (
-    <Modal title={isNew ? 'New record' : 'Change record'} subtitle={zone.name} onClose={onClose} footer={<><Btn onClick={onClose}>Cancel</Btn><Btn className="primary" disabled={!f.content} onClick={save}>Save</Btn></>}>
+    <Modal title={isNew ? 'New record' : 'Change record'} subtitle={showDomain(zone.name)} onClose={onClose} footer={<><Btn onClick={onClose}>Cancel</Btn><Btn className="primary" disabled={!f.content} onClick={save}>Save</Btn></>}>
       <div className="stack">
         <div className="grid grid-2">
-          <Field label="Name" hint={`@ = ${zone.name}`}><input className="input mono" value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="www" /></Field>
+          <Field label="Name" hint={`@ = ${showDomain(zone.name)}`}><input className="input mono" value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="www" /></Field>
           <Field label="Type"><select className="select" value={f.type} onChange={(e) => set('type', e.target.value)}>{TYPES.map((x) => <option key={x} value={x}>{x}</option>)}</select></Field>
         </div>
         <Field label="Value" hint={HINT[f.type]}>
@@ -438,23 +440,24 @@ export function TemplateDialog({ zones, zone: zone0, start = 'web', preset = {},
   const ip = useApi('/dns/public-address', [], { live: false, poll: false });
   const sites = useApi(tpl === 'site' ? '/dns/sites' : null, [tpl], { live: false, poll: false });
   const mySites = ((sites.data || [])).filter((s) => zone && s.zone && s.zone.id === zone.id && s.zone.account === zone.account);
-  useEffect(() => { if (tpl === 'site' && !o.site && mySites[0]) setO({ ...o, site: mySites[0].domain }); }, [tpl, mySites.length]); // eslint-disable-line react-hooks/exhaustive-deps -- erste Adresse vorschlagen
+  // Erste Adresse vorschlagen – auch nach einem Domain-Wechsel (sonst bliebe die Adresse der vorigen Domain gewählt)
+  useEffect(() => { if (tpl === 'site' && sites.data && !mySites.some((s) => s.domain === o.site)) setO({ ...o, site: mySites[0] ? mySites[0].domain : undefined }); }, [tpl, zoneKey, sites.data]); // eslint-disable-line react-hooks/exhaustive-deps
   const recs = zone && ip.data ? templateRecords(tpl, zone.name, o, ip.data) : [];
   const apply = async () => {
     try {
       const res = await post('/dns/apply', { records: recs });
       const bad = res.filter((r) => r.action === 'error');
-      if (bad.length) toast.error(bad.map((r) => r.error).join(' · '));
+      if (bad.length) toast.error(bad.map((r) => t(r.error)).join(' · '));
       else toast.success(pl(res.filter((r) => r.action !== 'unchanged').length, '1 record set', '{n} records set'));
       onApplied(); onClose();
     } catch (e) { toast.error(e); }
   };
   return (
-    <Modal title="Templates" subtitle={zone ? zone.name : ''} onClose={onClose} footer={<><Btn onClick={onClose}>Cancel</Btn><Btn className="primary" icon={Wand2} disabled={!recs.length} onClick={apply}>{pl(recs.length, 'Set 1 record', 'Set {n} records')}</Btn></>}>
+    <Modal title="Templates" subtitle={zone ? showDomain(zone.name) : ''} onClose={onClose} footer={<><Btn onClick={onClose}>Cancel</Btn><Btn className="primary" icon={Wand2} disabled={!recs.length} onClick={apply}>{pl(recs.length, 'Set 1 record', 'Set {n} records')}</Btn></>}>
       <div className="stack">
         <div className="grid grid-2">
           <Field label="Template"><select className="select" value={tpl} onChange={(e) => setTpl(e.target.value)}>{TEMPLATES.map((x) => <option key={x.id} value={x.id}>{t(x.label)}</option>)}</select></Field>
-          <Field label="Domain"><select className="select" value={zoneKey} onChange={(e) => setZoneKey(e.target.value)}>{zones.map((z) => <option key={`${z.account}/${z.id}`} value={`${z.account}/${z.id}`}>{z.name}</option>)}</select></Field>
+          <Field label="Domain"><select className="select" value={zoneKey} onChange={(e) => setZoneKey(e.target.value)}>{zones.map((z) => <option key={`${z.account}/${z.id}`} value={`${z.account}/${z.id}`}>{showDomain(z.name)}</option>)}</select></Field>
         </div>
         {tpl === 'site' && (sites.data && !mySites.length ? <div className="small muted">No web server in Hostwerk uses a name in this domain yet (Web servers → address).</div> : (
           <Field label="Address of the web server"><select className="select" value={o.site || ''} onChange={(e) => setO({ ...o, site: e.target.value })}>{mySites.map((s) => <option key={s.domain} value={s.domain}>{`${s.domain} (${s.web})`}</option>)}</select></Field>
@@ -466,6 +469,7 @@ export function TemplateDialog({ zones, zone: zone0, start = 'web', preset = {},
           </div>
         )}
         {tpl === 'mail' && <div className="small muted">DKIM needs the key of your mail server – with the extension “Mail server” use “Mail server records” under Providers.</div>}
+        {!ip.data && (ip.error ? <Callout kind="err" dismissible={false}>{ip.error}</Callout> : <Loading />)}
         {ip.data && !ip.data.v4 && !ip.data.v6 && ['web', 'site', 'mc', 'mail'].includes(tpl) && <Callout kind="warn" dismissible={false}>The public address of this connection is unknown right now.</Callout>}
         {recs.length > 0 && (
           <div className="dns-preview">
@@ -487,12 +491,12 @@ function ImportDialog({ zone, onClose, onDone }) {
     try {
       const r = await post(`${zoneBase(zone)}/import`, { text, apply: true });
       const bad = (r.done || []).filter((x) => x.action === 'error');
-      if (bad.length) toast.error(bad.map((x) => x.error).join(' · ')); else toast.success(pl((r.done || []).length, '1 record set', '{n} records set'));
+      if (bad.length) toast.error(bad.map((x) => t(x.error)).join(' · ')); else toast.success(pl((r.done || []).length, '1 record set', '{n} records set'));
       onDone(); onClose();
     } catch (e) { toast.error(e); }
   };
   return (
-    <Modal title="Import zone file" subtitle={zone.name} onClose={onClose} footer={<><Btn onClick={onClose}>Cancel</Btn>{preview ? <Btn className="primary" icon={Upload} disabled={!preview.add.length} onClick={apply}>{pl(preview.add.length, 'Add 1 record', 'Add {n} records')}</Btn> : <Btn className="primary" disabled={!text.trim()} onClick={check}>Check</Btn>}</>}>
+    <Modal title="Import zone file" subtitle={showDomain(zone.name)} onClose={onClose} footer={<><Btn onClick={onClose}>Cancel</Btn>{preview ? <Btn className="primary" icon={Upload} disabled={!preview.add.length} onClick={apply}>{pl(preview.add.length, 'Add 1 record', 'Add {n} records')}</Btn> : <Btn className="primary" disabled={!text.trim()} onClick={check}>Check</Btn>}</>}>
       <div className="stack">
         <div className="small muted">A zone file (BIND format) from your old provider. Hostwerk only adds what is missing – nothing is deleted or overwritten. SOA and NS are left to the provider.</div>
         <input type="file" accept=".zone,.txt,.db,text/plain" onChange={pick} aria-label="Zone file" />
@@ -537,7 +541,7 @@ function DnssecBadge({ zone }) {
     <>
       <button type="button" className={`badge dns-sec ${x.cls}`} onClick={() => setOpen(true)} title={t(x.text)}><x.icon size={12} /> {t(x.label)}</button>
       {open && (
-        <Modal title={x.label} subtitle={zone.name} onClose={() => setOpen(false)} footer={<Btn onClick={() => setOpen(false)}>Close</Btn>}>
+        <Modal title={x.label} subtitle={showDomain(zone.name)} onClose={() => setOpen(false)} footer={<Btn onClick={() => setOpen(false)}>Close</Btn>}>
           <div className="stack">
             <p className="small">{t(x.text)}</p>
             {s.data.status !== 'secure' && ds.length > 0 && (
@@ -581,9 +585,11 @@ function MailRecords({ onApplied }) {
   const domains = m.data.servers.flatMap((s) => s.domains.map((d) => ({ ...d, server: s.name })));
   if (!domains.length) return <div className="card-body small muted">The mail server has no own domain yet.</div>;
   const apply = async (d) => {
-    const res = await post('/dns/apply', { records: d.records.filter((r) => !r.present) });
-    const bad = res.filter((r) => r.action === 'error');
-    if (bad.length) toast.error(bad.map((r) => r.error).join(' · ')); else toast.success(pl(res.length, '1 record set', '{n} records set'));
+    try {
+      const res = await post('/dns/apply', { records: d.records.filter((r) => !r.present) });
+      const bad = res.filter((r) => r.action === 'error');
+      if (bad.length) toast.error(bad.map((r) => t(r.error)).join(' · ')); else toast.success(pl(res.length, '1 record set', '{n} records set'));
+    } catch (e) { toast.error(e); }
     m.reload({ silent: true }); onApplied();
   };
   return (
@@ -620,13 +626,20 @@ function RecordsPanel({ zs, onAddProvider }) {
   const [tpl, setTpl] = useState(false);
   const [imp, setImp] = useState(false);
   const [filter, setFilter] = useState('');
+  const [type, setType] = useState('');
   // Viele Einträge: die Karte füllt die restliche Höhe, die Tabelle scrollt darin (Kopfzeile klebt), die Seite bleibt stehen
   const fill = useFill({ min: 320 });
   useEffect(() => { if (zone && !zoneKey) setZoneKey(`${zone.account}/${zone.id}`); }, [zone, zoneKey]);
-  const list = useMemo(() => { const q = filter.trim().toLowerCase(); const l = recs.data || []; return q ? l.filter((r) => `${r.name} ${r.type} ${r.content}`.toLowerCase().includes(q)) : l; }, [recs.data, filter]);
+  // Natürlich sortiert (host-2 vor host-10, die Zone selbst zuerst), Filter nach Text und Typ – große Zonen bleiben bedienbar
+  const list = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    const l = (recs.data || []).filter((r) => (!type || r.type === type) && (!q || `${r.name} ${showDomain(r.name)} ${r.type} ${r.content}`.toLowerCase().includes(q)));
+    return sortRecords(l, zone ? zone.name : '');
+  }, [recs.data, filter, type, zone && zone.name]);
+  const types = useMemo(() => [...new Set((recs.data || []).map((r) => r.type))].sort(), [recs.data]);
   const proxy = !!(zone && zone.provider === 'cloudflare');
   const removeRec = async (r) => {
-    if (!(await confirmDialog({ title: t('Delete the {type} record “{name}”?', { type: r.type, name: rel(r.name, zone.name) }), text: r.content, confirm: 'Delete', danger: true }))) return;
+    if (!(await confirmDialog({ title: t('Delete the {type} record “{name}”?', { type: r.type, name: showDomain(rel(r.name, zone.name)) }), text: r.content, confirm: 'Delete', danger: true }))) return;
     try { await del(`${zoneBase(zone)}/records/${enc(r.id)}`); recs.reload({ silent: true }); } catch (e) { toast.error(e); }
   };
   const verify = async (r) => { try { setCheck({ rec: r, result: await post('/dns/verify', r) }); } catch (e) { toast.error(e); } };
@@ -636,7 +649,7 @@ function RecordsPanel({ zs, onAddProvider }) {
     <div className="card dns-records" ref={fill}>
       <div className="card-head dns-wrap">
         <ListChecks size={16} /><h3>Records</h3>
-        <select className="select dns-zone" aria-label="Zone" value={`${zone.account}/${zone.id}`} onChange={(e) => setZoneKey(e.target.value)}>{zones.map((z) => <option key={`${z.account}/${z.id}`} value={`${z.account}/${z.id}`}>{z.name}</option>)}</select>
+        <select className="select dns-zone" aria-label="Zone" value={`${zone.account}/${zone.id}`} onChange={(e) => setZoneKey(e.target.value)}>{zones.map((z) => <option key={`${z.account}/${z.id}`} value={`${z.account}/${z.id}`}>{showDomain(z.name)}</option>)}</select>
         <DnssecBadge key={`${zone.account}/${zone.id}`} zone={zone} />
         <div className="right row-tight">
           <Btn className="xs ghost" icon={Wand2} onClick={() => setTpl(true)}>Templates</Btn>
@@ -649,16 +662,17 @@ function RecordsPanel({ zs, onAddProvider }) {
       {recs.error ? <div className="card-body"><Callout kind="err">{recs.error}</Callout></div>
         : !recs.data ? <div className="card-body"><Loading /></div> : (
           <>
-            <div className="card-body dns-filter"><input className="input" value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Filter by name, type or value" aria-label="Filter" /></div>
-            {!list.length ? (filter ? <TileEmpty icon={Search} text="Nothing matches the filter." /> : <TileEmpty icon={ListChecks} text="This zone has no records yet." />) : (
+            <div className="card-body dns-filter row-tight"><input className="input grow" value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Filter by name, type or value" aria-label="Filter" />
+              {types.length > 1 && <select className="select dns-type-filter" aria-label="Record type" value={type} onChange={(e) => setType(e.target.value)}><option value="">{t('All types')}</option>{types.map((x) => <option key={x} value={x}>{x}</option>)}</select>}</div>
+            {!list.length ? (filter || type ? <TileEmpty icon={Search} text="Nothing matches the filter." /> : <TileEmpty icon={ListChecks} text="This zone has no records yet." />) : (
               <div className="dns-table-wrap">
                 <table className="table dns-table">
                   <thead><tr><th>Name</th><th>Type</th><th>Value</th><th>TTL</th><th><span className="dns-sr">Actions</span></th></tr></thead>
                   <tbody>
                     {list.map((r) => (
-                      <tr key={r.id}>
-                        <td className="mono">{rel(r.name, zone.name)}</td>
-                        <td><span className="badge">{r.type}</span>{r.proxied && <span className="badge accent">proxy</span>}</td>
+                      <tr key={r.id} onDoubleClick={() => setRec(r)} title={t('Double-click to change')}>
+                        <td className="mono dns-name" title={r.name}>{showDomain(rel(r.name, zone.name))}</td>
+                        <td className="dns-type"><span className="badge">{r.type}</span>{r.proxied && <span className="badge accent">proxy</span>}</td>
                         <td className="mono dns-value" title={r.content}>{r.priority !== undefined ? `${r.priority} ` : ''}{r.content}</td>
                         <td className="small muted">{ttlText(r.ttl)}</td>
                         <td className="dns-actions">
@@ -780,7 +794,7 @@ function LiveDnsTab() {
   const ov = useApi('/dns', [], { live: false });
   if (!ov.data) return ov.error ? <Callout kind="err">{ov.error}</Callout> : <Loading />;
   return (
-    <div className="stack">
+    <div className="stack dns-live">
       <div className="row-tight dns-wrap">
         <span className="small muted grow">Names that follow this connection and the DNS of your domains – the full management is on the DNS page.</span>
         <a className="btn sm" href="#/ext/dns"><Globe size={14} /> Open DNS</a>

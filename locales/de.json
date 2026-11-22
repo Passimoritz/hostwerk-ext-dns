@@ -306,6 +306,13 @@
   "Hostwerk tries again by itself.": "Hostwerk versucht es von selbst wieder.",
   "DNS names are not updated": "DNS-Namen werden nicht aktualisiert",
   "Open {name}": "{name} öffnen",
+  "DNS records": "DNS-Einträge",
+  "DynDNS moved to DNS management": "DynDNS ist in die DNS-Verwaltung umgezogen",
+  "is now kept up to date here": "wird jetzt hier aktuell gehalten",
+  "DynDNS is no longer part of “Router & port forwarding” – the name and token moved here.": "DynDNS gehört nicht mehr zu „Router & Portfreigaben“ – Name und Token sind hierher umgezogen.",
+  "Please enter a name.": "Bitte einen Namen eingeben.",
+  "No public address found to set – check the internet connection and that IPv4 or IPv6 is switched on.": "Keine öffentliche Adresse zum Setzen gefunden – Internetverbindung prüfen und ob IPv4 oder IPv6 eingeschaltet ist.",
+  "The records must be a list.": "Die Einträge müssen eine Liste sein.",
   "$patterns": [
     [
       "Provider {}",
@@ -396,8 +403,7 @@
       "deSEC: {}"
     ]
   ],
-  "DNS records": "DNS-Einträge",
-  "DynDNS moved to DNS management": "DynDNS ist in die DNS-Verwaltung umgezogen",
-  "is now kept up to date here": "wird jetzt hier aktuell gehalten",
-  "DynDNS is no longer part of “Router & port forwarding” – the name and token moved here.": "DynDNS gehört nicht mehr zu „Router & Portfreigaben“ – Name und Token sind hierher umgezogen."
+  "All types": "Alle Typen",
+  "Double-click to change": "Doppelklick zum Ändern",
+  "Record type": "Eintragstyp"
 }

@@ -127,7 +127,7 @@ function dynCatalog() {
 
 /** Name vervollständigen: „meinserver“ + duckdns → „meinserver.duckdns.org“. */
 function fullName(kind, name) {
-  const n = String(name || '').trim().toLowerCase().replace(/\.+$/, '');
+  const n = require('./records').strip(name); // Umlaute → Punycode (müller.example → xn--mller-kva.example)
   const p = DYN[kind];
   if (!p || !p.suffix || !n || n.includes('.')) return n;
   return `${n}.${p.suffix}`;
